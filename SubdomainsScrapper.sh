@@ -31,9 +31,18 @@ do
         #subfinder and httpx
         subfinder -d $domain --silent | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | uniq | grep "$domain" >> $location
 
+        #amass subdomain
+        amass enum -passive -d $domain | sort -u >> $location
+
+        #assetfinder subdomains
+        assetfinder -subs-only $domain | sort -u >> $location
+
+        #subevil subdomains
+        python3 /opt/Bug\ Bounty\ Scripts/SubEvil/SubEvil.py -d $domain | sort -u >> $location
+
         #crh.sh subdomains
-        echo "Examples: %.yahoo.com, %.bf1.yahoo.com, %25.%25.%25.%25.%25.yahoo.com, %internal%.yahoo.com
-                {you can put % wildcard anywhere in search like %api.yahoo.com}
+        echo "Examples: %.yahoo.com, %25.bf1.yahoo.com, %25.%25.%25.%25.%25.yahoo.com, %25internal%25.yahoo.com
+                {you can put %25 wildcard anywhere in search like %25api.yahoo.com}
                 {Put some more wildcard in crt.sh website}
                 "
         read -p "Use CRSH quries here: " crsh
