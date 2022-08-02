@@ -1,5 +1,6 @@
 #! /bin/bash
 
+echo "Starting Subdomains Scrapper"
 echo "Subdomains Scrapper"
 read -p "Enter domain to extract all subdomains: " domain #this is a variable which is getting domain.
 echo "Domain": $domain
@@ -47,9 +48,17 @@ do
 
         echo "Starting subevil"
         #subevil subdomains
-        python3 /opt/Bug\ Bounty\ Scripts/SubEvil/SubEvil.py -d $domain | sort -u >> $location
+        python3 /opt/Bug\ Bounty\ Scripts/SubEvil/SubEvil.py -d $domain | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | sort -u >> $location
 
-        echo "Starting crh.sh"
+        echo "Starting crh.sh (Domain)"
+
+        #crh.sh subdomains
+        echo "Examples: yahoo.com"
+            
+        read -p "Use CRSH quries here: " crsh
+        curl -s "https://crt.sh/?q=$crsh" | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | grep "$domain" | sort -u >> $location
+
+        echo "Starting crh.sh (PowerPlay)"
         #crh.sh subdomains
         echo "Examples: %.yahoo.com, %25.bf1.yahoo.com, %25.%25.%25.%25.%25.yahoo.com, %25internal%25.yahoo.com
                 {you can put %25 wildcard anywhere in search like %25api.yahoo.com}
@@ -62,9 +71,9 @@ do
         #dnsrecon subdomains
         dnsrecon -d $domain -a | grep -oE "[a-zA-Z0-9._-]+\.$domain" | uniq >> $location
 
-        echo "Starting gobuster"
-        #gobuster vhost bruteforce
-        gobuster vhost --useragent "google" --wordlist "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" --url https://$domain | httpx-toolkit -silent -mc 200,302,301,403 | grep -oE "[a-zA-Z0-9._-]+\.$domain"  >> $location
+        # echo "Starting gobuster" This has some error will find better fuzzing vhost tool
+        # #gobuster vhost bruteforce
+        # gobuster vhost --useragent "google" --wordlist "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" --url https://$domain | httpx-toolkit -silent -mc 200,302,301,403 | grep -oE "[a-zA-Z0-9._-]+\.$domain"  >> $location
 
 
         cat $location | sort | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> sortedSubdomains.txt
