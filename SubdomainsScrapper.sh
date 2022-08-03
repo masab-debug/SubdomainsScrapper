@@ -73,7 +73,7 @@ do
 
         # echo "Starting gobuster" This has some error will find better fuzzing vhost tool
         # #gobuster vhost bruteforce
-        # gobuster vhost --useragent "google" --wordlist "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" --url https://$domain | httpx-toolkit -silent -mc 200,302,301,403 | grep -oE "[a-zA-Z0-9._-]+\.$domain"  >> $location
+        gobuster vhost --useragent "google" --wordlist "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" --url https://$domain | grep -oE "[a-zA-Z0-9._-]+\.$domain" | httpx-toolkit -silent -mc 200,302,301,403  >> aliveDomains.txt
 
 
         cat $location | sort | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> sortedSubdomains.txt
