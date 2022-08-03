@@ -71,9 +71,10 @@ do
         #dnsrecon subdomains
         dnsrecon -d $domain -a | grep -oE "[a-zA-Z0-9._-]+\.$domain" | uniq >> $location
 
-        # echo "Starting gobuster" This has some error will find better fuzzing vhost tool
+        echo "Gobuster is out"
+        # echo "Starting gobuster"
         # #gobuster vhost bruteforce
-        gobuster vhost --useragent "google" --wordlist "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" --url https://$domain | grep -oE "[a-zA-Z0-9._-]+\.$domain" | httpx-toolkit -silent -mc 200,302,301,403  >> $domain-aliveDomains.txt
+        # gobuster vhost --useragent "google" --wordlist "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" --url https://$domain | grep -oE "[a-zA-Z0-9._-]+\.$domain" | httpx-toolkit -silent -mc 200,302,301,403  >> $domain-aliveDomains.txt
 
 
         cat $location | sort | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-sortedSubdomains.txt
