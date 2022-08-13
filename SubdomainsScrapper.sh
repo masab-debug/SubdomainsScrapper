@@ -103,10 +103,13 @@ do
 
         echo "Starting WayBackUrl"
         #wayback machine
-        waybackurls $domain | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> urls.txt
+        waybackurls $domain-aliveDomains.txt | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-urls.txt
 
         echo "Starting GAU for Links"
-        cat allAliveDomains.txt | gau | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> urls.txt 
+        cat $domain-aliveDomains.txt | gau | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-urls.txt
+
+        echo "Starting HTTPX"
+        cat $domain-urls.txt | httpx-toolkit -silent -mc 200,302,301,403,500 >> $domain-aliveUrls.txt
         
 
 
