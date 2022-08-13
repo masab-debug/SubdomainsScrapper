@@ -111,7 +111,14 @@ do
         echo "Starting HTTPX"
         cat $domain-urls.txt | httpx-toolkit -silent -mc 200,302,301,403,500 >> $domain-aliveUrls.txt
         
+        echo "Separating files according to extension"
+        cat $domain-aliveUrls.txt | egrep -i -E -o "\.{1}\w*$" | sort -su >> EndPointsExtension.txt
 
+        echo "Making files according to extensions found"
+        while read LINE
+            do 
+                cat $domain-aliveUrls.txt | grep "$LINE" >> $LINE-files.txt
+        done < EndPointsExtension.txt
 
     else
         echo "$d is not a Valid Domain [FQDN]"
