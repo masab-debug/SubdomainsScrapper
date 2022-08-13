@@ -82,13 +82,18 @@ do
         # gobuster vhost --useragent "google" --wordlist "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" --url https://$domain | grep -oE "[a-zA-Z0-9._-]+\.$domain" | httpx-toolkit -silent -mc 200,302,301,403  >> $domain-aliveDomains.txt
 
         echo "FFUF is Starting"
+
         echo "FFUF enumerating HOSTS"
-        sudo ffuf -H "Host: FUZZ" -H "User-Agent: cloudflair" -c -w "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" -u https://yahoo.com/ -mc 200,302,403,500,301 >> hosts-ffuf-$location
+        sudo ffuf -H "Host: FUZZ" -H "User-Agent: cloudflair" -c -w "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" -u https://$domain/ -mc 200,302,403,500,301 >> aliveffufhosts-$location
         
         echo "FFUF enumerating VHOSTS"
-        sudo ffuf -H "Host: FUZZ.$domain" -H "User-Agent: cloudflair" -c -w "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" -u https://$domain/ -v -mc 200,302,403,500 | grep -A 2 '| URL |' | grep -oE "[a-zA-Z0-9._-]+\.$domain" >> vhosts-ffuf-$location
+        sudo ffuf -H "Host: FUZZ.$domain" -H "User-Agent: cloudflair" -c -w "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" -u https://$domain/ -v -mc 200,302,403,500 | grep -A 2 '| URL |' | grep -oE "[a-zA-Z0-9._-]+\.$domain" >> aliveffufvhosts-$location
+
+        echo "Starting GetAllUrls"
+        cat $domain-sortedSubdomains.txt | gau | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | grep "$domain" | sort -u >> $location
 
         cat $location | sort | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-sortedSubdomains.txt
+
 
         echo "Pinging using httpx"
         #pinging using httpx
@@ -98,7 +103,11 @@ do
 
         echo "Starting WayBackUrl"
         #wayback machine
-        waybackurls $domain | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> waybackurls.txt
+        waybackurls $domain | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> urls.txt
+
+        echo "Starting GAU for Links"
+        cat allAliveDomains.txt | gau | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> urls.txt 
+        
 
 
     else
