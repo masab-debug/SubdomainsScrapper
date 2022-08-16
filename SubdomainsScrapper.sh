@@ -123,7 +123,7 @@ do
         cd $gfp
         while read LINE
                     do 
-                        cat ../test.txt | gf $LINE >> $LINE-urls.txt
+                        cat ../$domain-aliveUrls.txt | gf $LINE >> $LINE-urls.txt
         done < gf-patterns.txt
 
         find . -size 0 -delete
