@@ -1,7 +1,7 @@
 #! /bin/bash
 
 echo "Starting Subdomains Scrapper"
-echo "Subdomains Scrapper"
+echo "Subdomains Scrapper V1.0"
 read -p "Enter domain to extract all subdomains: " domain #this is a variable which is getting domain.
 echo "Domain": $domain
 
@@ -50,14 +50,7 @@ do
         #subevil subdomains
         python3 /opt/Bug\ Bounty\ Scripts/SubEvil/SubEvil.py -d $domain | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | sort -u >> $location
 
-        echo "Starting crh.sh (Domain)"
-
-        #crh.sh subdomains
-        echo "Examples: %.yahoo.com, %25.bf1.yahoo.com, %25.%25.%25.%25.%25.yahoo.com, %25internal%25.yahoo.com
-                    {you can put %25 wildcard anywhere in search like %25api.yahoo.com}
-                    {Put some more wildcard in crt.sh website}
-                    "
-            
+        echo "Starting crh.sh"
         while true;
             do
             read -p "Use CRSH quries here: " crsh
@@ -76,65 +69,51 @@ do
         #dnsrecon subdomains
         dnsrecon -d $domain -a | grep -oE "[a-zA-Z0-9._-]+\.$domain" | uniq >> $location
 
-        # echo "Gobuster is out"
-        # echo "Starting gobuster"
-        # #gobuster vhost bruteforce
-        # gobuster vhost --useragent "google" --wordlist "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" --url https://$domain | grep -oE "[a-zA-Z0-9._-]+\.$domain" | httpx-toolkit -silent -mc 200,302,301,403  >> $domain-aliveDomains.txt
-
-        echo "FFUF is Starting"
-
-        echo "FFUF enumerating HOSTS"
-        sudo ffuf -H "Host: FUZZ" -H "User-Agent: cloudflair" -c -w "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" -u https://$domain/ -mc 200,302,403,500,301 >> aliveffufhosts-$location
-        
-        echo "FFUF enumerating VHOSTS"
-        sudo ffuf -H "Host: FUZZ.$domain" -H "User-Agent: cloudflair" -c -w "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-110000.txt" -u https://$domain/ -v -mc 200,302,403,500 | grep -A 2 '| URL |' | grep -oE "[a-zA-Z0-9._-]+\.$domain" >> aliveffufvhosts-$location
-
-        echo "Starting GetAllUrls"
-        cat $domain-sortedSubdomains.txt | gau | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | grep "$domain" | sort -u >> $location
-
         cat $location | sort | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-sortedSubdomains.txt
-
+        
+        # echo "Starting GetAllUrls"
+        # cat $domain-sortedSubdomains.txt | gau | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | grep "$domain" | sort -u >> gau-$location
+        
+        # echo "again sorting"
+        # cat gau-$location >> $domain-sortedSubdomains.txt
 
         echo "Pinging using httpx"
         #pinging using httpx
-        cat $domain-sortedSubdomains.txt | httpx-toolkit -silent -mc 200,302,301,403 | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-aliveDomains.txt
-
+        cat $domain-sortedSubdomains.txt | httpx-toolkit -silent -mc 200,302,301,403 -p 80,8080,8443,443 | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-aliveDomains.txt
         echo "Successfully Extracted All Subdomains"
 
-        echo "Starting WayBackUrl"
-        #wayback machine
-        waybackurls $domain-aliveDomains.txt | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-urls.txt
+        # echo "Starting WayBackUrl"
+        # #wayback machine
+        # waybackurls $domain-aliveDomains.txt | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-urls.txt
 
-        echo "Starting GAU for Links"
-        cat $domain-aliveDomains.txt | gau | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-urls.txt
+        # echo "Starting GAU for Links"
+        # cat $domain-aliveDomains.txt | gau | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-urls.txt
 
-        echo "Starting HTTPX"
-        cat $domain-urls.txt | httpx-toolkit -silent -mc 200,302,301,403,500 >> $domain-aliveUrls.txt
+        # echo "Starting HTTPX"
+        # cat $domain-urls.txt | httpx-toolkit -silent -mc 200,302,301,403,500 >> $domain-aliveUrls.txt
         
-        echo "Separating files according to extension"
-        cat $domain-aliveUrls.txt | egrep -i -E -o "\.{1}\w*$" | sort -su >> EndPointsExtension.txt
+        # echo "Separating files according to extension"
+        # cat $domain-aliveUrls.txt | egrep -i -E -o "\.{1}\w*$" | sort -su >> EndPointsExtension.txt
 
-        echo ""
-        read -p "Folder name to save output" gfp
-        mkdir $gfp
+        # echo "Making files"
+        # mkdir urls
+        # cd urls
 
-        ls ~/.gf | sed 's/[.].*$//' >> $gfp/gf-patterns.txt
+        # ls ~/.gf | sed 's/[.].*$//' >> gf-patterns.txt
+        
+        # while read LINE
+        #             do 
+        #                 cat ../$domain-aliveUrls.txt | gf $LINE >> $LINE-urls.txt
+        # done < gf-patterns.txt
 
-        cd $gfp
-        while read LINE
-                    do 
-                        cat ../$domain-aliveUrls.txt | gf $LINE >> $LINE-urls.txt
-        done < gf-patterns.txt
+        # find . -size 0 -delete
 
-        find . -size 0 -delete
 
-        cd ..
-
-        echo "Making files according to extensions found"
-        while read LINE
-            do 
-                cat $domain-aliveUrls.txt | grep "$LINE" >> $LINE-files.txt
-        done < EndPointsExtension.txt
+        # echo "Making files according to extensions found"
+        # while read LINE
+        #     do 
+        #         cat ../$domain-aliveUrls.txt | grep "$LINE" >> $LINE-files.txt
+        # done < ../EndPointsExtension.txt
 
     else
         echo "$d is not a Valid Domain [FQDN]"
