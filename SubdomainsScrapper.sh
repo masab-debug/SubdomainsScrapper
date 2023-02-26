@@ -48,7 +48,7 @@ do
 
         echo "Starting subevil"
         #subevil subdomains
-        python3 /opt/Bug\ Bounty\ Scripts/SubEvil/SubEvil.py -d $domain | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | sort -u >> $location
+        python3 /opt/tools/SubEvil/SubEvil.py -d $domain | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | sort -u >> $location
 
         echo "Starting crh.sh"
         while true;
