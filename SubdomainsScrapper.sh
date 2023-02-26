@@ -40,7 +40,7 @@ do
 
         echo "Starting amass"
         #amass subdomain
-        amass enum -passive -d $domain | sort -u >> $location
+        amass enum --passive -d $domain | sort -u >> $location
 
         echo "Starting assetfinder"
         #assetfinder subdomains
