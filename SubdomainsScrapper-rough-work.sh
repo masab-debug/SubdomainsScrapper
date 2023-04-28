@@ -28,17 +28,19 @@ do
         #ominsint subdomains
         curl -s "https://sonar.omnisint.io/subdomains/$domain" | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | sort -u | grep "$domain" >> $location
 
+
         echo "Starting Wayback Url For Subdomains"
         #wayback machine
         waybackurls $domain | grep -oE "[a-zA-Z0-9._-]+\.$domain" |  grep "$domain" | uniq >> $location
 
+
         echo "Starting subfinder and httpx"
         #subfinder and httpx
-        subfinder -d $domain --silent -all | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | uniq | grep "$domain" >> $location
+        subfinder -d $domain --silent | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | uniq | grep "$domain" >> $location
 
         echo "Starting amass"
         #amass subdomain
-        amass enum --passive -norecursive -d $domain | sort -u >> $location
+        amass enum --passive -d $domain | sort -u >> $location
 
         echo "Starting assetfinder"
         #assetfinder subdomains
@@ -81,12 +83,7 @@ do
 
         echo "Pinging using httpx"
         #pinging using httpx
-        cat $domain-sorted.txt | httpx-toolkit -silent -sc -mc 200,302,301,403,500 -p 80,8080,8443,443 | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-alive.txt
-        cat $domain-alive.txt | grep "200" >> 200.txt
-        cat $domain-alive.txt | grep "301" >> 301.txt
-        cat $domain-alive.txt | grep "302" >> 302.txt
-        cat $domain-alive.txt | grep "403" >> 403.txt
-        cat $domain-alive.txt | grep "500" >> 500.txt
+        cat $domain-sorted.txt | httpx-toolkit -silent -mc 200,302,301,403 -p 80,8080,8443,443 | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-alive.txt
         echo "Successfully Extracted All Subdomains"
 
         # echo "Starting WayBackUrl"
