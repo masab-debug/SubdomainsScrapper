@@ -16,6 +16,17 @@ do
         read -p "Location to save files: " location
         echo "Your location and filename of saving subdomains file: " $location
 
+        #Starting DNS Recon
+        dnsrecon -d $domain -a -t std -j $domain.json
+        dnsenum --noreverse --enum $domain -w -p 100 -s 100 -o $domain.xml
+        grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' $domain.xml >> ips.txt
+        grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' $domain.json >> ips.txt
+        dig $domain | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' >> ips.txt
+        grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" $domain.xml | sort -u | grep -vE '([0-9]{1,3}){3}' >> $location
+        grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" $domain.json | sort -u | grep -vE '([0-9]{1,3}){3}' >> $location
+        cat ips.txt | dnsx -ptr -resp-only >> reverse-lookups.json
+        cat reverse-lookups.json | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | sort -u | grep "$domain" >> $location
+
         echo "Starting Sublist3r"
         #sublist3r subdomains
         sublist3r -d $domain -o $location
