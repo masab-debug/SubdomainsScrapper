@@ -34,7 +34,7 @@ do
 
         echo "Starting subfinder and httpx"
         #subfinder and httpx
-        subfinder -d $domain --silent -all | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | uniq | grep "$domain" >> $location
+        subfinder -d $domain --silent | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | uniq | grep "$domain" >> $location
 
         echo "Starting amass"
         #amass subdomain
