@@ -93,12 +93,38 @@ do
         echo "Pinging using httpx"
         #pinging using httpx
         cat $domain-sorted.txt | httpx-toolkit -silent -sc -mc 200,302,301,403,500 -p 80,8080,8443,443 | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-alive.txt
-        cat $domain-alive.txt | grep "200" >> 200.txt
-        cat $domain-alive.txt | grep "301" >> 301.txt
-        cat $domain-alive.txt | grep "302" >> 302.txt
-        cat $domain-alive.txt | grep "403" >> 403.txt
-        cat $domain-alive.txt | grep "500" >> 500.txt
+        # cat $domain-alive.txt | grep "200" >> 200.txt
+        # cat $domain-alive.txt | grep "301" >> 301.txt
+        # cat $domain-alive.txt | grep "302" >> 302.txt
+        # cat $domain-alive.txt | grep "403" >> 403.txt
+        # cat $domain-alive.txt | grep "500" >> 500.txt
         echo "Successfully Extracted All Subdomains"
+        
+        echo "permutations is happening"
+        cat $domain-alive.txt | cut -d " " -f1 | cut -d "/" -f3 | sort -u  >> $domain-nostatuscode.txt
+        altdns -i $domain-nostatuscode.txt -o $domain-permutations.txt -w /usr/share/wordlists/permutations.txt
+        shuffuledns -i $domain-permutations.txt -r /usr/share/wordlists/resolvers.txt -o $domain-permutations-1.txt
+        cat $domain-permutations-1.txt >> $domain-nostatuscode.txt
+
+        echo "Pinging using httpx all domains"
+        cat $domain-nostatuscode.txt | httpx-toolkit -silent -sc -mc 200,302,301,403,500 -p 80,8080,8443,443 | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-alive-1.txt
+        
+        cat $domain-alive-1.txt | grep "200" >> 200.txt
+        cat $domain-alive-1.txt | grep "301" >> 301.txt
+        cat $domain-alive-1.txt | grep "302" >> 302.txt
+        cat $domain-alive-1.txt | grep "403" >> 403.txt
+        cat $domain-alive-1.txt | grep "500" >> 500.txt
+         
+        rm $domain.xml
+        rm $domain.json
+        rm reverse-lookups.json
+        rm $domain-sorted.txt
+        rm $domain-alive.txt
+        rm $domain-permutations.txt
+        rm $domain-permutations-1.txt
+        rm $domain-nostatuscode.txt
+        rm $domain-alive-1.txt
+        rm $domain-nostatuscode.txt
 
         # echo "Starting WayBackUrl"
         # #wayback machine
