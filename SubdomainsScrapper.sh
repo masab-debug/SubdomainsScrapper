@@ -120,10 +120,9 @@ do
         rm reverse-lookups.json
         rm $domain-sorted.txt
         rm $domain-alive.txt
+        rm $domain-alive-1.txt
         rm $domain-permutations.txt
         rm $domain-permutations-1.txt
-        rm $domain-nostatuscode.txt
-        rm $domain-alive-1.txt
         rm $domain-nostatuscode.txt
 
         # echo "Starting WayBackUrl"
