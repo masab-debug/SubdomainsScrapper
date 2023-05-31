@@ -1,0 +1,15 @@
+dnsrecon
+dnsenum
+dig
+gf
+Sublist3r
+waybackurls
+subfinder
+amass
+assetfinder
+SubEvil
+dnsx
+httpx-toolkit
+altdns
+shuffledns
+
