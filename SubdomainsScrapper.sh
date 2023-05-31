@@ -99,9 +99,9 @@ do
         # Remove temporary files
         rm $location
 
-        # Starting GetAllUrls
-        echo "Starting GetAllUrls"
-        cat $domain-sorted.txt | gau | gf domains | grep "$domain" | sort -u >> $domain-sorted.txt
+        # # Starting GetAllUrls
+        # echo "Starting GetAllUrls"
+        # cat $domain-sorted.txt | gau | gf domains | grep "$domain" | sort -u >> $domain-sorted.txt
         
         # Append the sorted results to a new file
         cat $domain-sorted.txt | sort -u | tee -a $domain-sort.txt
