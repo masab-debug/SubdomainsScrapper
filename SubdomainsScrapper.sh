@@ -68,27 +68,6 @@ do
         echo "Starting subevil"
         python3 /opt/tools/SubEvil/SubEvil.py -d $domain | gf domains | sort -u >> $location
 
-        # Uncomment the following lines to enable crh.sh
-        # echo "Starting crh.sh"
-        # while true;
-        # do
-        #     read -p "Use CRSH queries here: " crsh
-        #     curl -s "https://crt.sh/?q=$crsh" | gf domains | grep "$domain" | sort -u >> $location
-            
-        #     echo "Continue to write [yes], if not press Enter"
-        #     read -p "What to perform crsh query again?" cond
-        #     if [ "$cond" = "yes" ]; then
-        #         continue
-        #     else
-        #         break;
-        #     fi
-        # done
-
-        # Uncomment the following lines to enable crh.sh with wildcard queries
-        # curl -s "https://crt.sh/?q=$crsh" | gf domains | grep "$domain" | sort -u >> $location
-        # curl -s "https://crt.sh/?q=%25.$crsh" | gf domains | grep "$domain" | sort -u >> $location
-        # curl -s "https://crt.sh/?q=%25.%25.$crsh" | gf domains | grep "$domain" | sort -u >> $location
-
         # Starting dnsrecon
         echo "Starting dnsrecon"
         dnsrecon -d $domain -a | grep -oE "[a-zA-Z0-9._-]+\.$domain" | uniq >> $location
