@@ -97,7 +97,7 @@ do
         # Perform permutations
         echo "Permutations are happening"
         altdns -i $domain-alive.txt -o $domain-altdns.txt -w /usr/share/wordlists/permutations.txt
-        shuffledns -i $domain-altdns.txt -r /usr/share/wordlists/resolvers/resolvers-trusted.txt -o $domain-shuffledns.txt
+        shuffledns -l $domain-altdns.txt -r /usr/share/wordlists/resolvers/resolvers-trusted.txt -o $domain-shuffledns.txt
         cat $domain-shuffledns.txt >> $domain-alldomains.txt
 
         # Pinging using httpx for all domains
