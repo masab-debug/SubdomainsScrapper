@@ -1,69 +1,79 @@
 #! /bin/bash
 
+# Create subdomains directory if it doesn't exist
+mkdir -p subdomains
+cd subdomains
+
+# Starting Subdomains Scrapper
 echo "Starting Subdomains Scrapper"
 echo "Subdomains Scrapper V1.0"
-read -p "Enter domain to extract all subdomains: " domain #this is a variable which is getting domain.
-echo "Domain": $domain
 
+# Read the domain from user input
+read -p "Enter domain to extract all subdomains: " domain  # This variable stores the domain
+echo "Domain: $domain"
+
+# Loop through each domain
 for d in $domain
 do
+    # Check if the domain is valid
     host $d 2>&1 > /dev/null
     if [ $? -eq 0 ]
     then
         echo "$d is a Valid Domain [FQDN]"
         
-        #script start
+        # Prompt the user for the location to save files
         read -p "Location to save files: " location
-        echo "Your location and filename of saving subdomains file: " $location
+        echo "Your location and filename of saving subdomains file: $location"
 
-        #Starting DNS Recon
+        # Starting DNS Recon
         dnsrecon -d $domain -a -t std -j $domain.json
         dnsenum --noreverse --enum $domain -w -p 100 -s 100 -o $domain.xml
         grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' $domain.xml >> ips.txt
         grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' $domain.json >> ips.txt
         dig $domain | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' >> ips.txt
-        grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" $domain.xml | sort -u | grep -vE '([0-9]{1,3}){3}' >> $location
-        grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" $domain.json | sort -u | grep -vE '([0-9]{1,3}){3}' >> $location
+        cat $domain.xml | gf domains  | sort -u | grep -vE '([0-9]{1,3}){3}' >> $location
+        cat $domain.json | gf domains | sort -u | grep -vE '([0-9]{1,3}){3}' >> $location
         cat ips.txt | dnsx -ptr -resp-only >> reverse-lookups.json
-        cat reverse-lookups.json | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | sort -u | grep "$domain" >> $location
+        cat reverse-lookups.json | gf domains | sort -u | grep "$domain" >> $location
 
+        # Starting Sublist3r
         echo "Starting Sublist3r"
-        #sublist3r subdomains
         sublist3r -d $domain -o $location
 
+        # Starting Rapiddns
         echo "Starting Rapiddns"
-        #rapiddns subdomains
-        curl -s "https://rapiddns.io/subdomain/$domain?full=1#result" | grep -B 1 "<td><a" | sed 's/<td><a.*//g' | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | sort -u | sort -n | cut -d" " -f2- | grep "$domain" >> $location
+        curl -s "https://rapiddns.io/subdomain/$domain?full=1#result" | grep -B 1 "<td><a" | sed 's/<td><a.*//g' | gf domains | sort -u | sort -n | cut -d" " -f2- | grep "$domain" >> $location
 
+        # Starting Ominsint
         echo "Starting Ominsint"
-        #ominsint subdomains
-        curl -s "https://sonar.omnisint.io/subdomains/$domain" | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | sort -u | grep "$domain" >> $location
+        curl -s "https://sonar.omnisint.io/subdomains/$domain" | gf domains | sort -u | grep "$domain" >> $location
 
+        # Starting Wayback Url For Subdomains
         echo "Starting Wayback Url For Subdomains"
-        #wayback machine
-        waybackurls $domain | grep -oE "[a-zA-Z0-9._-]+\.$domain" |  grep "$domain" | uniq >> $location
+        waybackurls $domain | grep -oE "[a-zA-Z0-9._-]+\.$domain" | grep "$domain" | uniq >> $location
 
+        # Starting subfinder and httpx
         echo "Starting subfinder and httpx"
-        #subfinder and httpx
-        subfinder -d $domain --silent | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | uniq | grep "$domain" >> $location
+        subfinder -d $domain --silent | gf domains | uniq | grep "$domain" >> $location
 
+        # Starting amass
         echo "Starting amass"
-        #amass subdomain
         amass enum --passive -norecursive -d $domain | sort -u >> $location
 
+        # Starting assetfinder
         echo "Starting assetfinder"
-        #assetfinder subdomains
         assetfinder -subs-only $domain | sort -u >> $location
 
+        # Starting subevil
         echo "Starting subevil"
-        #subevil subdomains
-        python3 /opt/tools/SubEvil/SubEvil.py -d $domain | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | sort -u >> $location
+        python3 /opt/tools/SubEvil/SubEvil.py -d $domain | gf domains | sort -u >> $location
 
+        # Uncomment the following lines to enable crh.sh
         # echo "Starting crh.sh"
         # while true;
-        #     do
-        #     read -p "Use CRSH quries here: " crsh
-        #     curl -s "https://crt.sh/?q=$crsh" | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | grep "$domain" | sort -u >> $location
+        # do
+        #     read -p "Use CRSH queries here: " crsh
+        #     curl -s "https://crt.sh/?q=$crsh" | gf domains | grep "$domain" | sort -u >> $location
             
         #     echo "Continue to write [yes], if not press Enter"
         #     read -p "What to perform crsh query again?" cond
@@ -74,97 +84,65 @@ do
         #     fi
         # done
 
-        curl -s "https://crt.sh/?q=$crsh" | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | grep "$domain" | sort -u >> $location
-        curl -s "https://crt.sh/?q=%25.$crsh" | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | grep "$domain" | sort -u >> $location
-        curl -s "https://crt.sh/?q=%25.%25.$crsh" | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | grep "$domain" | sort -u >> $location
+        # Uncomment the following lines to enable crh.sh with wildcard queries
+        # curl -s "https://crt.sh/?q=$crsh" | gf domains | grep "$domain" | sort -u >> $location
+        # curl -s "https://crt.sh/?q=%25.$crsh" | gf domains | grep "$domain" | sort -u >> $location
+        # curl -s "https://crt.sh/?q=%25.%25.$crsh" | gf domains | grep "$domain" | sort -u >> $location
 
+        # Starting dnsrecon
         echo "Starting dnsrecon"
-        #dnsrecon subdomains
         dnsrecon -d $domain -a | grep -oE "[a-zA-Z0-9._-]+\.$domain" | uniq >> $location
 
+        # Sort and deduplicate the results
         cat $location | sort | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-sorted.txt
-        
-        # echo "Starting GetAllUrls"
-        # cat $domain-sortedSubdomains.txt | gau | grep -Po "([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]" | grep "$domain" | sort -u >> gau-$location
-        
-        # echo "again sorting"
-        # cat gau-$location >> $domain-sortedSubdomains.txt
 
+        # Remove temporary files
+        rm $location
+
+        # Starting GetAllUrls
+        echo "Starting GetAllUrls"
+        cat $domain-sorted.txt | gau | gf domains | grep "$domain" | sort -u >> $domain-sorted.txt
+        
+        # Append the sorted results to a new file
+        cat $domain-sorted.txt | sort -u | tee -a $domain-sort.txt
+
+        # Remove temporary files
+        rm $domain-sorted.txt
+
+        # Pinging using httpx
         echo "Pinging using httpx"
-        #pinging using httpx
-        cat $domain-sorted.txt | httpx-toolkit -silent -sc -mc 200,302,301,403,500 -p 80,8080,8443,443 | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-alive.txt
-        cat $domain-alive.txt | grep "200" >> 200.txt
-        cat $domain-alive.txt | grep "301" >> 301.txt
-        cat $domain-alive.txt | grep "302" >> 302.txt
-        cat $domain-alive.txt | grep "403" >> 403.txt
-        cat $domain-alive.txt | grep "500" >> 500.txt
-        echo "Successfully Extracted All Subdomains"
-        
-        # echo "permutations is happening"
-        # cat $domain-alive.txt | cut -d " " -f1 | cut -d "/" -f3 | sort -u  >> $domain-nostatuscode.txt
-        # altdns -i $domain-nostatuscode.txt -o $domain-permutations.txt -w /usr/share/wordlists/permutations.txt
-        # shuffuledns -i $domain-permutations.txt -r /usr/share/wordlists/resolvers.txt -o $domain-permutations-1.txt
-        # cat $domain-permutations-1.txt >> $domain-nostatuscode.txt
+        cat $domain-sort.txt | httpx-toolkit -silent -mc 200,302,301,403,500 -p 80,8080,8443,443 | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-alive.txt
 
-        # echo "Pinging using httpx all domains"
-        # cat $domain-nostatuscode.txt | httpx-toolkit -silent -sc -mc 200,302,301,403,500 -p 80,8080,8443,443 | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-alive-1.txt
-        
-        # cat $domain-alive-1.txt | grep "200" >> 200.txt
-        # cat $domain-alive-1.txt | grep "301" >> 301.txt
-        # cat $domain-alive-1.txt | grep "302" >> 302.txt
-        # cat $domain-alive-1.txt | grep "403" >> 403.txt
-        # cat $domain-alive-1.txt | grep "500" >> 500.txt
+        echo "Successfully Extracted All Subdomains"
+
+        # Perform permutations
+        echo "Permutations are happening"
+        altdns -i $domain-alive.txt -o $domain-altdns.txt -w /usr/share/wordlists/permutations.txt
+        shuffledns -i $domain-altdns.txt -r /usr/share/wordlists/resolvers/resolvers-trusted.txt -o $domain-shuffledns.txt
+        cat $domain-shuffledns.txt >> $domain-alldomains.txt
+
+        # Pinging using httpx for all domains
+        echo "Pinging using httpx for all domains"
+        cat $domain-alldomains.txt | httpx-toolkit -silent -sc -title -mc 200,302,301,403,500 -p 80,8080,8443,443 | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-alive-1.txt
+
+        # Separate the results based on the status code
+        cat $domain-alive-1.txt | grep "200" >> 200.txt
+        cat $domain-alive-1.txt | grep "301" >> 301.txt
+        cat $domain-alive-1.txt | grep "302" >> 302.txt
+        cat $domain-alive-1.txt | grep "403" >> 403.txt
+        cat $domain-alive-1.txt | grep "500" >> 500.txt
          
+        # Remove temporary files
         rm $domain.xml
         rm $domain.json
         rm reverse-lookups.json
         rm $domain-sorted.txt
-        rm $domain-alive.txt
         rm $domain-alive-1.txt
         rm $domain-permutations.txt
         rm $domain-permutations-1.txt
         rm $domain-nostatuscode.txt
 
-        # echo "Starting WayBackUrl"
-        # #wayback machine
-        # waybackurls $domain-aliveDomains.txt | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-urls.txt
-
-        # echo "Starting GAU for Links"
-        # cat $domain-aliveDomains.txt | gau | uniq | awk '{ print length, $0 }' | sort -n | cut -d" " -f2- >> $domain-urls.txt
-
-        # echo "Starting HTTPX"
-        # cat $domain-urls.txt | httpx-toolkit -silent -mc 200,302,301,403,500 >> $domain-aliveUrls.txt
-        
-        # echo "Separating files according to extension"
-        # cat $domain-aliveUrls.txt | egrep -i -E -o "\.{1}\w*$" | sort -su >> EndPointsExtension.txt
-
-        # echo "Making files"
-        # mkdir urls
-        # cd urls
-
-        # ls ~/.gf | sed 's/[.].*$//' >> gf-patterns.txt
-        
-        # while read LINE
-        #             do 
-        #                 cat ../$domain-aliveUrls.txt | gf $LINE >> $LINE-urls.txt
-        # done < gf-patterns.txt
-
-        # find . -size 0 -delete
-
-
-        # echo "Making files according to extensions found"
-        # while read LINE
-        #     do 
-        #         cat ../$domain-aliveUrls.txt | grep "$LINE" >> $LINE-files.txt
-        # done < ../EndPointsExtension.txt
-
     else
         echo "$d is not a Valid Domain [FQDN]"
     fi
 done
-
-#notes:
-#add further more tools on requirement basis
-#theharvestor
-#synapsint subdomains
-#virustotal subdomains (Virus Total not supporting the curl so manualy is done)
